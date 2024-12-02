@@ -43,6 +43,72 @@ app.post('/processar', async (req, res) => {
   }
 });
 
+// Rota de login
+app.post('/login', async (req, res) => {
+  const { email, senhaLogin } = req.body;
+
+  try {
+      await client.connect();
+      const database = client.db('BancoFinal');
+      const collection = database.collection('usuario');
+
+      // Busca o usuário pelo email
+      const user = await collection.findOne({ email });
+
+      if (user) {
+          // Verifica se a senha fornecida corresponde à senha armazenada
+          const senhaMatch = await bcrypt.compare(senhaLogin, user.senha);
+
+          if (senhaMatch) {
+              // Autenticação bem-sucedida
+              req.session.logado = true;
+              req.session.nome = user.nome;
+              req.session.email = user.email;
+
+              // Redireciona para a página protegida
+              // return res.redirect('/protect.php');
+              res.status(200).send('Processado com sucesso.');
+          } else {
+              // Senha incorreta
+              // return res.redirect('/login?erro=senha');
+              res.status(401).send('Acesso não autorizado.');
+
+          }
+      } else {
+          // Usuário não encontrado
+          res.status(401).send('Acesso não autorizado.');
+
+          // return res.redirect('/login?erro=usuario');
+      }
+  } catch (error) {
+      console.error('Erro ao processar login:', error);
+      res.status(500).send('Erro no servidor');
+  } finally {
+      await client.close();
+  }
+});
+
+// Página protegida, só acessível se o usuário estiver logado
+app.get('/protect', (req, res) => {
+  if (req.session.logado) {
+      res.send(`Bem-vindo, ${req.session.nome}!`);
+  } else {
+      res.redirect('/login');
+  }
+});
+
+// Rota de login (página de login HTML)
+app.get('/login', (req, res) => {
+  if (req.query.erro === 'senha') {
+      res.send('<h1>Erro: Senha incorreta!</h1><a href="/login">Tente novamente</a>');
+  } else if (req.query.erro === 'usuario') {
+      res.send('<h1>Erro: Usuário não encontrado!</h1><a href="/login">Tente novamente</a>');
+  } else {
+      res.send('<h1>Página de Login</h1><form method="POST" action="/login"><input type="email" name="email" placeholder="Email" required><input type="password" name="senhaLogin" placeholder="Senha" required><button type="submit">Login</button></form>');
+  }
+});
+
+
 // Inicia o servidor
 const PORT = 3000;
 app.listen(PORT, () => {
