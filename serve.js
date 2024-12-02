@@ -56,7 +56,7 @@ app.post('/processar', async (req, res) => {
     database = client.db('BancoFinal');
 
     const collection = database.collection('usuario');
-    const senhac = await bcrypt.MD5(senha).toString;
+    const senhac = bcrypt.MD5(senha).toString;
 
     // Insere os dados na coleção
     await collection.insertOne({ nome, email, senhac });
