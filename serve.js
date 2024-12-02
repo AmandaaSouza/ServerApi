@@ -89,10 +89,11 @@ app.post('/login', async (req, res) => {
     const user = await collection.findOne({ email });
 
     const bcrypt = require('bcrypt');
+    const senhaLoginc = await bcrypt.hash(senhaLogin, 10);
 
     if (user) {
       // Verifica se a senha fornecida corresponde à senha armazenada
-      const senhaMatch = await bcrypt.compare(senhaLogin, user.senha);
+      const senhaMatch = await bcrypt.compare(senhaLoginc, user.senha);
 
       if (senhaMatch) {
         // Autenticação bem-sucedida
