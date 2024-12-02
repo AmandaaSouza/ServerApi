@@ -16,7 +16,19 @@ app.use(bodyParser.urlencoded({ extended: true }));
 
 // Configura a conexão com o MongoDB
 const uri = 'mongodb+srv://021ab354:021ab354@cluster0.xppt7.mongodb.net/?retryWrites=true&w=majority&appName=Cluster0';
-const client = new MongoClient(uri);
+// const client = new MongoClient(uri);
+
+let client;
+let database;
+
+async function getDatabase() {
+    if (!client) {
+        client = new MongoClient(uri, { useUnifiedTopology: true });
+        await client.connect();
+        database = client.db('BancoFinal');
+    }
+    return database;
+}
 
 // Rota para processar os dados do formulário
 app.post('/processar', async (req, res) => {
@@ -24,8 +36,9 @@ app.post('/processar', async (req, res) => {
 
   try {
     // Conecta ao banco de dados
-    await client.connect();
-    const database = client.db('BancoFinal');
+    // await client.connect();
+    const database = await getDatabase();
+    // const database = client.db('BancoFinal');
     const collection = database.collection('usuario');
 
     // Insere os dados na coleção
@@ -48,8 +61,10 @@ app.post('/login', async (req, res) => {
   const { email, senhaLogin } = req.body;
 
   try {
-      await client.connect();
-      const database = client.db('BancoFinal');
+      // await client.connect();
+      // const database = client.db('BancoFinal');
+      const database = await getDatabase();
+
       const collection = database.collection('usuario');
 
       // Busca o usuário pelo email
@@ -107,6 +122,8 @@ app.get('/login', (req, res) => {
       res.send('<h1>Página de Login</h1><form method="POST" action="/login"><input type="email" name="email" placeholder="Email" required><input type="password" name="senhaLogin" placeholder="Senha" required><button type="submit">Login</button></form>');
   }
 });
+
+// module.exports = { getDatabase };
 
 
 // Inicia o servidor
