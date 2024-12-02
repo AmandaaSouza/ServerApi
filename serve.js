@@ -56,10 +56,10 @@ app.post('/processar', async (req, res) => {
     database = client.db('BancoFinal');
 
     const collection = database.collection('usuario');
-    senha = bcrypt.hash(senha, 10);
+    const senhac = await bcrypt.hash(senha, 10);
 
     // Insere os dados na coleção
-    await collection.insertOne({ nome, email, senha });
+    await collection.insertOne({ nome, email, senhac });
     res.status(200).send('Processado com sucesso.');
 
     // Redireciona para a página inicial
