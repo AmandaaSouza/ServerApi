@@ -49,12 +49,14 @@ app.post('/processar', async (req, res) => {
   try {
     // Conecta ao banco de dados
     // await client.connect();
+    const bcrypt = require('bcrypt');
 
     client = new MongoClient(uri, { useUnifiedTopology: false });
     await client.connect();
     database = client.db('BancoFinal');
     
     const collection = database.collection('usuario');
+senha = bcrypt.hash(senha);
 
     // Insere os dados na coleção
     await collection.insertOne({ nome, email, senha });
@@ -86,9 +88,11 @@ app.post('/login', async (req, res) => {
       // Busca o usuário pelo email
       const user = await collection.findOne({ email });
 
+      const bcrypt = require('bcrypt');
+
       if (user) {
           // Verifica se a senha fornecida corresponde à senha armazenada
-          const senhaMatch = user.senha === senhaLogin; //await bcrypt.compare(senhaLogin, user.senha);
+          const senhaMatch = await bcrypt.compare(senhaLogin, user.senha);
 
           if (senhaMatch) {
               // Autenticação bem-sucedida
@@ -98,7 +102,7 @@ app.post('/login', async (req, res) => {
 
               // Redireciona para a página protegida
               // return res.redirect('/protect.php');
-              res.status(200).send('Processado com sucesso.');
+              res.status(200).send('Usuário e senha válido.');
           } else {
               // Senha incorreta
               // return res.redirect('/login?erro=senha');
@@ -118,6 +122,54 @@ app.post('/login', async (req, res) => {
       await client.close();
   }
 });
+
+app.get('/getInformacoeslogin', async (req, res) => {
+  const { email, senhaLogin } = req.body;
+
+  try {
+    client = new MongoClient(uri, { useUnifiedTopology: false });
+    await client.connect();
+    database = client.db('BancoFinal');
+
+     
+      const collection = database.collection('usuario');
+
+      // Busca o usuário pelo email
+      const user = await collection.findOne({ email });
+
+      if (user) {
+          // Verifica se a senha fornecida corresponde à senha armazenada
+          const senhaMatch = user.senha === senhaLogin; //await bcrypt.compare(senhaLogin, user.senha);
+
+          if (senhaMatch) {
+              // Autenticação bem-sucedida
+              // req.session.logado = true;
+              // req.session.nome = user.nome;
+              // req.session.email = user.email;
+
+              // Redireciona para a página protegida
+              // return res.redirect('/protect.php');
+              res.send(user);
+          } else {
+              // Senha incorreta
+              // return res.redirect('/login?erro=senha');
+              res.status(401).send('Acesso não autorizado.');
+
+          }
+      } else {
+          // Usuário não encontrado
+          res.status(401).send('Acesso não autorizado.');
+
+          // return res.redirect('/login?erro=usuario');
+      }
+  } catch (error) {
+      console.error('Erro ao processar login:', error);
+      res.status(500).send('Erro no servidor');
+  } finally {
+      await client.close();
+  }
+});
+
 
 // Página protegida, só acessível se o usuário estiver logado
 app.get('/protect', (req, res) => {
