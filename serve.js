@@ -49,14 +49,14 @@ app.post('/processar', async (req, res) => {
   try {
     // Conecta ao banco de dados
     // await client.connect();
-    const bcrypt = require('bcrypt');
+    const bcrypt = require('crypto-js');
 
     client = new MongoClient(uri, { useUnifiedTopology: false });
     await client.connect();
     database = client.db('BancoFinal');
 
     const collection = database.collection('usuario');
-    const senhac = await bcrypt.hash(senha, 10);
+    const senhac = await bcrypt.MD5(senha).toString;
 
     // Insere os dados na coleção
     await collection.insertOne({ nome, email, senhac });
@@ -88,11 +88,13 @@ app.post('/login', async (req, res) => {
     // Busca o usuário pelo email
     const user = await collection.findOne({ email });
 
-    const bcrypt = require('bcrypt');
+    const bcrypt = require('crypto-js');
 
     if (user) {
       // Verifica se a senha fornecida corresponde à senha armazenada
-      const senhaMatch = await bcrypt.compare(senhaLogin, user.senha);
+      const senhaLoginc = await bcrypt.MD5(senhaLogin).toString;
+
+      const senhaMatch =  user.senha === senhaLoginc;
 
       if (senhaMatch) {
         // Autenticação bem-sucedida
