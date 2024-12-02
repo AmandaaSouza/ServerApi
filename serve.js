@@ -49,7 +49,7 @@ app.post('/processar', async (req, res) => {
   try {
     // Conecta ao banco de dados
     // await client.connect();
-    const database = await getDatabase();
+    // const database = await getDatabase();
     // const database = client.db('BancoFinal');
     const collection = database.collection('usuario');
 
@@ -84,7 +84,7 @@ app.post('/login', async (req, res) => {
 
       if (user) {
           // Verifica se a senha fornecida corresponde à senha armazenada
-          const senhaMatch = await bcrypt.compare(senhaLogin, user.senha);
+          const senhaMatch = user.senha === senhaLogin; //await bcrypt.compare(senhaLogin, user.senha);
 
           if (senhaMatch) {
               // Autenticação bem-sucedida
