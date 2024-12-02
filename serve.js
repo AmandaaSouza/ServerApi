@@ -34,12 +34,12 @@ var database;
 })();*/
 
 async function getDatabase() {
-    if (!client) {
-        client = new MongoClient(uri, { useUnifiedTopology: false });
-        await client.connect();
-        database = client.db('BancoFinal');
-    }
-    return database;
+  if (!client) {
+    client = new MongoClient(uri, { useUnifiedTopology: false });
+    await client.connect();
+    database = client.db('BancoFinal');
+  }
+  return database;
 }
 
 // Rota para processar os dados do formulário
@@ -54,9 +54,9 @@ app.post('/processar', async (req, res) => {
     client = new MongoClient(uri, { useUnifiedTopology: false });
     await client.connect();
     database = client.db('BancoFinal');
-    
+
     const collection = database.collection('usuario');
-senha = bcrypt.hashSync(senha);
+    senha = bcrypt.hash(senha, 10);
 
     // Insere os dados na coleção
     await collection.insertOne({ nome, email, senha });
@@ -82,44 +82,44 @@ app.post('/login', async (req, res) => {
     await client.connect();
     database = client.db('BancoFinal');
 
-     
-      const collection = database.collection('usuario');
 
-      // Busca o usuário pelo email
-      const user = await collection.findOne({ email });
+    const collection = database.collection('usuario');
 
-      const bcrypt = require('bcrypt');
+    // Busca o usuário pelo email
+    const user = await collection.findOne({ email });
 
-      if (user) {
-          // Verifica se a senha fornecida corresponde à senha armazenada
-          const senhaMatch = await bcrypt.compare(senhaLogin, user.senha);
+    const bcrypt = require('bcrypt');
 
-          if (senhaMatch) {
-              // Autenticação bem-sucedida
-              // req.session.logado = true;
-              // req.session.nome = user.nome;
-              // req.session.email = user.email;
+    if (user) {
+      // Verifica se a senha fornecida corresponde à senha armazenada
+      const senhaMatch = await bcrypt.compare(senhaLogin, user.senha);
 
-              // Redireciona para a página protegida
-              // return res.redirect('/protect.php');
-              res.status(200).send('Usuário e senha válido.');
-          } else {
-              // Senha incorreta
-              // return res.redirect('/login?erro=senha');
-              res.status(401).send('Acesso não autorizado.');
+      if (senhaMatch) {
+        // Autenticação bem-sucedida
+        // req.session.logado = true;
+        // req.session.nome = user.nome;
+        // req.session.email = user.email;
 
-          }
+        // Redireciona para a página protegida
+        // return res.redirect('/protect.php');
+        res.status(200).send('Usuário e senha válido.');
       } else {
-          // Usuário não encontrado
-          res.status(401).send('Acesso não autorizado.');
+        // Senha incorreta
+        // return res.redirect('/login?erro=senha');
+        res.status(401).send('Acesso não autorizado.');
 
-          // return res.redirect('/login?erro=usuario');
       }
+    } else {
+      // Usuário não encontrado
+      res.status(401).send('Acesso não autorizado.');
+
+      // return res.redirect('/login?erro=usuario');
+    }
   } catch (error) {
-      console.error('Erro ao processar login:', error);
-      res.status(500).send('Erro no servidor');
+    console.error('Erro ao processar login:', error);
+    res.status(500).send('Erro no servidor');
   } finally {
-      await client.close();
+    await client.close();
   }
 });
 
@@ -131,42 +131,42 @@ app.get('/getInformacoeslogin', async (req, res) => {
     await client.connect();
     database = client.db('BancoFinal');
 
-     
-      const collection = database.collection('usuario');
 
-      // Busca o usuário pelo email
-      const user = await collection.findOne({ email });
+    const collection = database.collection('usuario');
 
-      if (user) {
-          // Verifica se a senha fornecida corresponde à senha armazenada
-          const senhaMatch = user.senha === senhaLogin; //await bcrypt.compare(senhaLogin, user.senha);
+    // Busca o usuário pelo email
+    const user = await collection.findOne({ email });
 
-          if (senhaMatch) {
-              // Autenticação bem-sucedida
-              // req.session.logado = true;
-              // req.session.nome = user.nome;
-              // req.session.email = user.email;
+    if (user) {
+      // Verifica se a senha fornecida corresponde à senha armazenada
+      const senhaMatch = user.senha === senhaLogin; //await bcrypt.compare(senhaLogin, user.senha);
 
-              // Redireciona para a página protegida
-              // return res.redirect('/protect.php');
-              res.send(user);
-          } else {
-              // Senha incorreta
-              // return res.redirect('/login?erro=senha');
-              res.status(401).send('Acesso não autorizado.');
+      if (senhaMatch) {
+        // Autenticação bem-sucedida
+        // req.session.logado = true;
+        // req.session.nome = user.nome;
+        // req.session.email = user.email;
 
-          }
+        // Redireciona para a página protegida
+        // return res.redirect('/protect.php');
+        res.send(user);
       } else {
-          // Usuário não encontrado
-          res.status(401).send('Acesso não autorizado.');
+        // Senha incorreta
+        // return res.redirect('/login?erro=senha');
+        res.status(401).send('Acesso não autorizado.');
 
-          // return res.redirect('/login?erro=usuario');
       }
+    } else {
+      // Usuário não encontrado
+      res.status(401).send('Acesso não autorizado.');
+
+      // return res.redirect('/login?erro=usuario');
+    }
   } catch (error) {
-      console.error('Erro ao processar login:', error);
-      res.status(500).send('Erro no servidor');
+    console.error('Erro ao processar login:', error);
+    res.status(500).send('Erro no servidor');
   } finally {
-      await client.close();
+    await client.close();
   }
 });
 
@@ -174,20 +174,20 @@ app.get('/getInformacoeslogin', async (req, res) => {
 // Página protegida, só acessível se o usuário estiver logado
 app.get('/protect', (req, res) => {
   if (req.session.logado) {
-      res.send(`Bem-vindo, ${req.session.nome}!`);
+    res.send(`Bem-vindo, ${req.session.nome}!`);
   } else {
-      res.redirect('/login');
+    res.redirect('/login');
   }
 });
 
 // Rota de login (página de login HTML)
 app.get('/login', (req, res) => {
   if (req.query.erro === 'senha') {
-      res.send('<h1>Erro: Senha incorreta!</h1><a href="/login">Tente novamente</a>');
+    res.send('<h1>Erro: Senha incorreta!</h1><a href="/login">Tente novamente</a>');
   } else if (req.query.erro === 'usuario') {
-      res.send('<h1>Erro: Usuário não encontrado!</h1><a href="/login">Tente novamente</a>');
+    res.send('<h1>Erro: Usuário não encontrado!</h1><a href="/login">Tente novamente</a>');
   } else {
-      res.send('<h1>Página de Login</h1><form method="POST" action="/login"><input type="email" name="email" placeholder="Email" required><input type="password" name="senhaLogin" placeholder="Senha" required><button type="submit">Login</button></form>');
+    res.send('<h1>Página de Login</h1><form method="POST" action="/login"><input type="email" name="email" placeholder="Email" required><input type="password" name="senhaLogin" placeholder="Senha" required><button type="submit">Login</button></form>');
   }
 });
 
