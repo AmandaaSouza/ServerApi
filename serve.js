@@ -93,12 +93,12 @@ app.post('/login', async (req, res) => {
 
     console.log("senha:"+senhaLogin);
 
-    console.log("senha banco:"+user.senha);
+    console.log("senha banco:"+user.senhac);
 
 
     if (user) {
       // Verifica se a senha fornecida corresponde à senha armazenada
-      const senhaMatch = await bcrypt.compare(senhaLogin, user.senha);
+      const senhaMatch = await bcrypt.compare(senhaLogin, user.senhac);
 
       if (senhaMatch) {
         // Autenticação bem-sucedida
