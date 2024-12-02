@@ -88,9 +88,9 @@ app.post('/login', async (req, res) => {
 
           if (senhaMatch) {
               // Autenticação bem-sucedida
-              req.session.logado = true;
-              req.session.nome = user.nome;
-              req.session.email = user.email;
+              // req.session.logado = true;
+              // req.session.nome = user.nome;
+              // req.session.email = user.email;
 
               // Redireciona para a página protegida
               // return res.redirect('/protect.php');
