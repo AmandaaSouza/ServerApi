@@ -23,7 +23,7 @@ let database;
 
 (async () => {
   try {
-      client = new MongoClient(uri, { useUnifiedTopology: true });
+      client = new MongoClient(uri, { useUnifiedTopology: false });
       await client.connect();
       database = client.db('BancoFinal');
       console.log('Conexão inicial ao MongoDB bem-sucedida');
@@ -35,7 +35,7 @@ let database;
 
 async function getDatabase() {
     if (!client) {
-        client = new MongoClient(uri, { useUnifiedTopology: true });
+        client = new MongoClient(uri, { useUnifiedTopology: false });
         await client.connect();
         database = client.db('BancoFinal');
     }
@@ -51,6 +51,11 @@ app.post('/processar', async (req, res) => {
     // await client.connect();
     // const database = await getDatabase();
     // const database = client.db('BancoFinal');
+
+    if (!database) {
+      database= getDatabase();
+    }
+    
     const collection = database.collection('usuario');
 
     // Insere os dados na coleção
@@ -77,6 +82,9 @@ app.post('/login', async (req, res) => {
       // const database = client.db('BancoFinal');
       // const database = await getDatabase();
 
+      if (!database) {
+        database= getDatabase();
+      }
       const collection = database.collection('usuario');
 
       // Busca o usuário pelo email
