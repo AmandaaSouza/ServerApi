@@ -21,6 +21,18 @@ const uri = 'mongodb+srv://021ab354:021ab354@cluster0.xppt7.mongodb.net/?retryWr
 let client;
 let database;
 
+(async () => {
+  try {
+      client = new MongoClient(uri, { useUnifiedTopology: true });
+      await client.connect();
+      database = client.db('BancoFinal');
+      console.log('Conexão inicial ao MongoDB bem-sucedida');
+  } catch (error) {
+      console.error('Erro ao conectar ao MongoDB:', error);
+      process.exit(1);
+  }
+})();
+
 async function getDatabase() {
     if (!client) {
         client = new MongoClient(uri, { useUnifiedTopology: true });
@@ -63,7 +75,7 @@ app.post('/login', async (req, res) => {
   try {
       // await client.connect();
       // const database = client.db('BancoFinal');
-      const database = await getDatabase();
+      // const database = await getDatabase();
 
       const collection = database.collection('usuario');
 
