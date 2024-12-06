@@ -1,74 +1,55 @@
+
+
+
 // Importa os módulos necessários
 const express = require('express');
 const cors = require('cors');
-const { MongoClient } = require('mongodb');
+const mongoose = require('mongoose');
+const bcrypt = require('bcrypt');
 const bodyParser = require('body-parser');
 
 // Cria uma aplicação Express
 const app = express();
 
 app.use(cors());
+app.use(express.json()); // Middleware para interpretar JSON
+app.use(bodyParser.urlencoded({ extended: true })); // Middleware para interpretar formulários
 
-app.use(express.json()); // Usando express.json() para entender o conteúdo JSON enviado pelo formulário
+// Configura a conexão com o MongoDB via Mongoose
+const uri = 'mongodb+srv://021ab354:021ab354@cluster0.xppt7.mongodb.net/BancoFinal?retryWrites=true&w=majority';
 
-// Configura o middleware para interpretar o corpo das requisições (formulário)
-app.use(bodyParser.urlencoded({ extended: true }));
+mongoose.connect(uri, { useNewUrlParser: true, useUnifiedTopology: true })
+  .then(() => console.log('Conexão com MongoDB bem-sucedida'))
+  .catch(error => console.error('Erro ao conectar ao MongoDB:', error));
 
-// Configura a conexão com o MongoDB
-const uri = 'mongodb+srv://021ab354:021ab354@cluster0.xppt7.mongodb.net/?retryWrites=true&w=majority&appName=Cluster0';
-// const client = new MongoClient(uri);
+// Define o Schema para a coleção `usuario`
+const userSchema = new mongoose.Schema({
+  nome: { type: String, required: true },
+  email: { type: String, required: true, unique: true },
+  senha: { type: String, required: true }
+});
 
-var client;
-var database;
-/*
-(async () => {
-  try {
-      client = new MongoClient(uri, { useUnifiedTopology: false });
-      await client.connect();
-      database = client.db('BancoFinal');
-      console.log('Conexão inicial ao MongoDB bem-sucedida');
-  } catch (error) {
-      console.error('Erro ao conectar ao MongoDB:', error);
-      process.exit(1);
-  }
-})();*/
-
-async function getDatabase() {
-  if (!client) {
-    client = new MongoClient(uri, { useUnifiedTopology: false });
-    await client.connect();
-    database = client.db('BancoFinal');
-  }
-  return database;
-}
+// Cria o modelo baseado no schema
+const Usuario = mongoose.model('Usuario', userSchema);
 
 // Rota para processar os dados do formulário
 app.post('/processar', async (req, res) => {
-  const { nome, senha, email } = req.body;
+  const { nome, email, senha } = req.body;
 
   try {
-    // Conecta ao banco de dados
-    // await client.connect();
-    const bcrypt = require('bcrypt');
+    // Hash da senha
+    const senhaHash = await bcrypt.hash(senha, 10);
 
-    client = new MongoClient(uri, { useUnifiedTopology: false });
-    await client.connect();
-    database = client.db('BancoFinal');
+    // Cria um novo usuário usando o modelo
+    const novoUsuario = new Usuario({ nome, email, senha: senhaHash });
 
-    const collection = database.collection('usuario');
-    const senha = await bcrypt.hash(senha, 10);
+    // Salva no MongoDB
+    await novoUsuario.save();
 
-    // Insere os dados na coleção
-    await collection.insertOne({ nome, email, senha });
-    res.status(200).send('Processado com sucesso.');
-
-    // Redireciona para a página inicial
+    res.status(200).send('Usuário cadastrado com sucesso.');
   } catch (error) {
-    console.error('Erro ao inserir dados no MongoDB:', error);
+    console.error('Erro ao cadastrar usuário:', error);
     res.status(500).send('Erro ao processar os dados.');
-  } finally {
-    // Encerra a conexão com o MongoDB
-    await client.close();
   }
 });
 
@@ -77,127 +58,55 @@ app.post('/login', async (req, res) => {
   const { email, senhaLogin } = req.body;
 
   try {
-    client = new MongoClient(uri, { useUnifiedTopology: false });
-    await client.connect();
-    database = client.db('BancoFinal');
-
-
-    const collection = database.collection('usuario');
-
     // Busca o usuário pelo email
-    const user = await collection.findOne({ email });
-
-    const bcrypt = require('bcrypt');
-    // const senhaLoginc = await bcrypt.hash(senhaLogin, 10);
-
-    console.log("senha:"+senhaLogin);
-
-    console.log("senha banco:"+user.senha);
-
+    const user = await Usuario.findOne({ email });
 
     if (user) {
       // Verifica se a senha fornecida corresponde à senha armazenada
       const senhaMatch = await bcrypt.compare(senhaLogin, user.senha);
 
       if (senhaMatch) {
-        // Autenticação bem-sucedida
-        // req.session.logado = true;
-        // req.session.nome = user.nome;
-        // req.session.email = user.email;
-
-        // Redireciona para a página protegida
-        // return res.redirect('/protect.php');
-        res.status(200).send('Usuário e senha válido.');
+        res.status(200).send('Usuário e senha válidos.');
       } else {
-        // Senha incorreta
-        // return res.redirect('/login?erro=senha');
         res.status(401).send('Acesso não autorizado.');
-
       }
     } else {
-      // Usuário não encontrado
-      res.status(401).send('Acesso não autorizado.');
-
-      // return res.redirect('/login?erro=usuario');
+      res.status(401).send('Usuário não encontrado.');
     }
   } catch (error) {
     console.error('Erro ao processar login:', error);
-    res.status(500).send('Erro no servidor');
-  } finally {
-    await client.close();
+    res.status(500).send('Erro no servidor.');
   }
 });
 
+// Rota para obter informações do login
 app.get('/getInformacoeslogin', async (req, res) => {
-  const { email, senhaLogin } = req.body;
+  const { email } = req.body;
 
   try {
-    client = new MongoClient(uri, { useUnifiedTopology: false });
-    await client.connect();
-    database = client.db('BancoFinal');
-
-
-    const collection = database.collection('usuario');
-
     // Busca o usuário pelo email
-    const user = await collection.findOne({ email });
+    const user = await Usuario.findOne({ email });
 
     if (user) {
-      // Verifica se a senha fornecida corresponde à senha armazenada
-      const senhaMatch = user.senha === senhaLogin; //await bcrypt.compare(senhaLogin, user.senha);
-
-      if (senhaMatch) {
-        // Autenticação bem-sucedida
-        // req.session.logado = true;
-        // req.session.nome = user.nome;
-        // req.session.email = user.email;
-
-        // Redireciona para a página protegida
-        // return res.redirect('/protect.php');
-        res.send(user);
-      } else {
-        // Senha incorreta
-        // return res.redirect('/login?erro=senha');
-        res.status(401).send('Acesso não autorizado.');
-
-      }
+      res.send(user);
     } else {
-      // Usuário não encontrado
-      res.status(401).send('Acesso não autorizado.');
-
-      // return res.redirect('/login?erro=usuario');
+      res.status(401).send('Usuário não encontrado.');
     }
   } catch (error) {
-    console.error('Erro ao processar login:', error);
-    res.status(500).send('Erro no servidor');
-  } finally {
-    await client.close();
+    console.error('Erro ao buscar informações:', error);
+    res.status(500).send('Erro no servidor.');
   }
 });
 
-
-// Página protegida, só acessível se o usuário estiver logado
+// Página protegida (apenas um exemplo)
 app.get('/protect', (req, res) => {
-  if (req.session.logado) {
-    res.send(`Bem-vindo, ${req.session.nome}!`);
-  } else {
-    res.redirect('/login');
-  }
+  res.send('Área protegida!');
 });
 
-// Rota de login (página de login HTML)
+// Rota para exibir a página de login
 app.get('/login', (req, res) => {
-  if (req.query.erro === 'senha') {
-    res.send('<h1>Erro: Senha incorreta!</h1><a href="/login">Tente novamente</a>');
-  } else if (req.query.erro === 'usuario') {
-    res.send('<h1>Erro: Usuário não encontrado!</h1><a href="/login">Tente novamente</a>');
-  } else {
-    res.send('<h1>Página de Login</h1><form method="POST" action="/login"><input type="email" name="email" placeholder="Email" required><input type="password" name="senhaLogin" placeholder="Senha" required><button type="submit">Login</button></form>');
-  }
+  res.send('<h1>Página de Login</h1><form method="POST" action="/login"><input type="email" name="email" placeholder="Email" required><input type="password" name="senhaLogin" placeholder="Senha" required><button type="submit">Login</button></form>');
 });
-
-// module.exports = { getDatabase };
-
 
 // Inicia o servidor
 const PORT = 3000;
