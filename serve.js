@@ -80,7 +80,7 @@ app.post('/login', async (req, res) => {
 });
 
 // Rota para obter informações do login
-app.get('/getInformacoeslogin', async (req, res) => {
+app.post('/getInformacoeslogin', async (req, res) => {
   const { email } = req.body;
 
   try {
