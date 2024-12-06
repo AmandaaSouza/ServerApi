@@ -63,7 +63,6 @@ app.post('/processar', async (req, res) => {
     res.status(200).send('Processado com sucesso.');
 
     // Redireciona para a página inicial
-    // res.redirect('/index.html');
   } catch (error) {
     console.error('Erro ao inserir dados no MongoDB:', error);
     res.status(500).send('Erro ao processar os dados.');
