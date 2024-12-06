@@ -56,10 +56,10 @@ app.post('/processar', async (req, res) => {
     database = client.db('BancoFinal');
 
     const collection = database.collection('usuario');
-    const senhac = await bcrypt.hash(senha, 10);
+    const senha = await bcrypt.hash(senha, 10);
 
     // Insere os dados na coleção
-    await collection.insertOne({ nome, email, senhac });
+    await collection.insertOne({ nome, email, senha });
     res.status(200).send('Processado com sucesso.');
 
     // Redireciona para a página inicial
@@ -92,12 +92,12 @@ app.post('/login', async (req, res) => {
 
     console.log("senha:"+senhaLogin);
 
-    console.log("senha banco:"+user.senhac);
+    console.log("senha banco:"+user.senha);
 
 
     if (user) {
       // Verifica se a senha fornecida corresponde à senha armazenada
-      const senhaMatch = await bcrypt.compare(senhaLogin, user.senhac);
+      const senhaMatch = await bcrypt.compare(senhaLogin, user.senha);
 
       if (senhaMatch) {
         // Autenticação bem-sucedida
